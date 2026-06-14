@@ -3,38 +3,100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>پلیر موزیک شخصی</title>
+<title>پلیر موزیک حرفه‌ای</title>
+<meta name="theme-color" content="#a5b4fc">
+
+<!--
+===========================================================
+  PWA MANIFEST (آماده برای استفاده)
+  برای فعال‌سازی واقعی، این بلوک را در فایل manifest.json
+  جدا ذخیره کرده و با <link rel="manifest" href="manifest.json">
+  به head اضافه کنید.
+-----------------------------------------------------------
+{
+  "name": "پلیر موزیک حرفه‌ای",
+  "short_name": "MusicPro",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eef2ff",
+  "theme_color": "#a5b4fc",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
+===========================================================
+-->
+
+<!--
+===========================================================
+  SERVICE WORKER (آماده برای استفاده)
+  این کد را در فایلی به نام sw.js ذخیره کنید و در اسکریپت اصلی
+  با navigator.serviceWorker.register('sw.js') ثبت کنید.
+-----------------------------------------------------------
+const CACHE_NAME = 'music-pro-v1';
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
+  );
+});
+===========================================================
+-->
+
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-  * { font-family: 'Vazirmatn', sans-serif; }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-  body {
+<style>
+  * { font-family: 'Vazirmatn', sans-serif; box-sizing: border-box; }
+
+  html, body {
     margin: 0;
     min-height: 100vh;
     overflow-x: hidden;
   }
 
-  /* ===== پس‌زمینه گرادینت متحرک ===== */
+  /* ===== پس‌زمینه گرادینت پویا ===== */
   .bg-animated {
     position: fixed;
     inset: 0;
     z-index: -2;
+    transition: background 1.6s ease-in-out;
   }
-
   .blob {
     position: absolute;
     border-radius: 50%;
     filter: blur(90px);
     opacity: 0.5;
-    transition: background 1.4s ease-in-out, opacity 1.4s ease-in-out;
-    animation: float 20s ease-in-out infinite;
+    transition: background 1.6s ease-in-out;
+    animation: float 22s ease-in-out infinite;
   }
-
   .blob1 { width: 42vw; height: 42vw; top: -8%; right: -8%; background: #a5b4fc; animation-delay: 0s; }
-  .blob2 { width: 38vw; height: 38vw; bottom: -10%; left: -6%; background: #f9a8d4; animation-delay: -6s; }
-  .blob3 { width: 34vw; height: 34vw; top: 35%; left: 28%; background: #99f6e4; animation-delay: -12s; }
+  .blob2 { width: 38vw; height: 38vw; bottom: -10%; left: -6%; background: #f9a8d4; animation-delay: -7s; }
+  .blob3 { width: 34vw; height: 34vw; top: 35%; left: 28%; background: #99f6e4; animation-delay: -14s; }
 
   @keyframes float {
     0%, 100% { transform: translate(0, 0) scale(1); }
@@ -42,7 +104,7 @@
     66% { transform: translate(-5%, -5%) scale(0.95); }
   }
 
-  /* ===== شیشه‌ای (Glassmorphism) ===== */
+  /* ===== شیشه‌ای ===== */
   .glass {
     background: rgba(255, 255, 255, 0.45);
     backdrop-filter: blur(24px) saturate(180%);
@@ -50,24 +112,22 @@
     border: 1px solid rgba(255, 255, 255, 0.5);
     box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
   }
-
   .glass-light {
     background: rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid rgba(255, 255, 255, 0.4);
   }
-
   .glass-strong {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.62);
     backdrop-filter: blur(28px) saturate(190%);
     -webkit-backdrop-filter: blur(28px) saturate(190%);
-    border: 1px solid rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.68);
     box-shadow: 0 10px 36px rgba(31, 38, 135, 0.1);
   }
 
   /* ===== اسکرول‌بار ===== */
-  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.25); border-radius: 10px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.4); }
@@ -94,48 +154,35 @@
   }
   input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
   input[type="range"]::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: #6366f1;
-    border: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #6366f1; border: none;
     box-shadow: 0 2px 8px rgba(99,102,241,0.4);
   }
 
-  /* ===== اکولایزر / ویژوالایزر ===== */
+  /* ===== ویژوالایزر (Web Audio API) ===== */
   .visualizer {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    gap: 5px;
+    gap: 4px;
     height: 70px;
+    width: 100%;
   }
   .visualizer .bar {
-    width: 6px;
+    flex: 1;
+    max-width: 8px;
     border-radius: 6px;
     background: linear-gradient(to top, #a5b4fc, #6366f1);
-    height: 8px;
-    transition: height 0.15s ease;
-  }
-  .visualizer.playing .bar {
-    animation: eq-bounce 1s ease-in-out infinite alternate;
-  }
-  @keyframes eq-bounce {
-    0% { height: 8px; }
-    100% { height: 64px; }
+    height: 4px;
+    transition: height 0.08s ease;
   }
 
   /* ===== کاور چرخان ===== */
-  .cover-spin {
-    animation: spin-slow 16s linear infinite;
-  }
+  .cover-spin { animation: spin-slow 16s linear infinite; }
   .cover-spin.paused { animation-play-state: paused; }
-  @keyframes spin-slow {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
+  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-  /* ===== انیمیشن ورود کارت‌ها ===== */
+  /* ===== انیمیشن‌ها ===== */
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(24px); }
     to { opacity: 1; transform: translateY(0); }
@@ -145,109 +192,193 @@
   .fade-up-delay2 { animation: fade-up 0.6s 0.16s ease both; }
   .fade-up-delay3 { animation: fade-up 0.6s 0.24s ease both; }
 
-  @keyframes pop-in {
-    from { opacity: 0; transform: scale(0.92); }
-    to { opacity: 1; transform: scale(1); }
-  }
+  @keyframes pop-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
   .pop-in { animation: pop-in 0.35s ease both; }
 
-  /* ===== دکمه کنترل ===== */
-  .ctrl-btn {
-    transition: transform 0.15s ease, background 0.2s ease;
+  @keyframes slide-in-modal {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
+  .modal-anim { animation: slide-in-modal 0.3s ease both; }
+
+  /* ===== دکمه‌ها ===== */
+  .ctrl-btn { transition: transform 0.15s ease, background 0.2s ease; }
   .ctrl-btn:hover { transform: translateY(-2px); }
   .ctrl-btn:active { transform: scale(0.92); }
-
-  .play-btn {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
+  .play-btn { transition: transform 0.2s ease, box-shadow 0.2s ease; }
   .play-btn:hover { transform: scale(1.06); }
   .play-btn:active { transform: scale(0.94); }
+  .active-toggle { color: #fff !important; background: #6366f1 !important; }
 
-  .active-toggle {
-    color: #fff !important;
-    background: #6366f1 !important;
-  }
-
-  /* ===== ناحیه درگ و دراپ ===== */
-  .dropzone {
-    transition: all 0.25s ease;
-  }
+  /* ===== درگ‌اند‌دراپ ===== */
+  .dropzone { transition: all 0.25s ease; }
   .dropzone.dragover {
     border-color: #6366f1 !important;
     background: rgba(99,102,241,0.08) !important;
     transform: scale(1.01);
   }
 
-  /* ===== کارت‌های لیست پخش ===== */
-  .track-card {
-    transition: all 0.25s ease;
-  }
-  .track-card:hover {
-    transform: translateY(-3px);
-  }
-  .track-card.active {
-    box-shadow: 0 8px 24px rgba(99,102,241,0.18);
-  }
+  /* ===== کارت‌ها ===== */
+  .track-card { transition: all 0.25s ease; }
+  .track-card:hover { transform: translateY(-3px); }
+  .track-card.active { box-shadow: 0 8px 24px rgba(99,102,241,0.18); }
+
+  .playlist-tab { transition: all 0.2s ease; }
+  .playlist-tab.active-playlist { background: #6366f1 !important; color: #fff !important; }
 
   /* ===== متن گرادینت ===== */
   .text-gradient {
     background: linear-gradient(135deg, #6366f1, #ec4899);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  /* ===== سایدبار موبایل ===== */
+  .sidebar { transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+  @media (max-width: 1024px) {
+    .sidebar {
+      position: fixed; top: 0; right: 0; height: 100vh; width: 280px;
+      z-index: 50; transform: translateX(100%);
+    }
+    [dir="rtl"] .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 40;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .sidebar-overlay.show { opacity: 1; pointer-events: auto; }
+  }
+
+  /* ===== فوتر شیشه‌ای ===== */
+  .player-footer {
+    position: sticky; bottom: 0.75rem; z-index: 30;
   }
 
   @media (max-width: 768px) {
-    .visualizer .bar { width: 4px; }
+    .visualizer .bar { max-width: 5px; }
   }
 </style>
 </head>
-<body class="text-slate-700 min-h-screen p-4 sm:p-6 lg:p-8">
+<body class="text-slate-700 min-h-screen">
 
   <!-- پس‌زمینه پویا -->
-  <div class="bg-animated" style="background: linear-gradient(135deg, #eef2ff 0%, #fdf2f8 50%, #f0fdfa 100%);">
+  <div class="bg-animated" id="bgLayer" style="background: linear-gradient(135deg, #eef2ff 0%, #fdf2f8 50%, #f0fdfa 100%);">
     <div class="blob blob1" id="blob1"></div>
     <div class="blob blob2" id="blob2"></div>
     <div class="blob blob3" id="blob3"></div>
   </div>
 
-  <div class="relative max-w-6xl mx-auto">
+  <!-- اورلی سایدبار موبایل -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- ===== هدر / خوش‌آمدگویی ===== -->
-    <header class="flex items-center justify-between mb-6 fade-up">
+  <div class="relative max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row gap-5 min-h-screen">
+
+    <!-- ================= سایدبار ================= -->
+    <aside class="sidebar glass rounded-3xl p-5 flex flex-col gap-5 lg:w-72 shrink-0 fade-up" id="sidebar">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-2xl glass-strong flex items-center justify-center">
+            <i class="fa-solid fa-headphones-simple text-indigo-500"></i>
+          </div>
+          <h1 class="font-extrabold text-slate-800 text-lg">MusicPro</h1>
+        </div>
+        <button id="closeSidebar" aria-label="بستن منو" class="lg:hidden ctrl-btn w-8 h-8 rounded-full glass-light flex items-center justify-center text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- ایمپورت فایل / ZIP -->
       <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800">سلام 👋 خوش اومدی</h1>
-        <p class="text-sm text-slate-500 mt-1">موزیک‌های خودت رو ایمپورت کن و لذت ببر</p>
+        <h3 class="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-folder-open text-indigo-400"></i> ایمپورت موزیک
+        </h3>
+        <div id="dropzone" class="dropzone glass-light rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center text-center gap-1.5 py-6 px-3 cursor-pointer">
+          <i class="fa-solid fa-cloud-arrow-up text-2xl text-indigo-400"></i>
+          <p class="text-xs text-slate-500">فایل، فولدر یا ZIP را<br>بکش و رها کن</p>
+          <p class="text-[11px] text-slate-400">MP3 · WAV · OGG · ZIP</p>
+        </div>
+        <input type="file" id="fileInput" accept="audio/*,.zip,application/zip" multiple class="hidden">
       </div>
-      <div class="w-12 h-12 rounded-2xl glass-strong flex items-center justify-center">
-        <i class="fa-solid fa-headphones-simple text-indigo-500 text-xl"></i>
+
+      <!-- ایمپورت از اسپاتیفای -->
+      <div>
+        <h3 class="text-xs font-bold text-slate-500 mb-2 flex items-center gap-2">
+          <i class="fa-brands fa-spotify text-green-500"></i> ایمپورت از اسپاتیفای
+        </h3>
+        <div class="glass-light rounded-2xl p-3 flex flex-col gap-2">
+          <input id="spotifyInput" type="text" placeholder="لینک پلی‌لیست اسپاتیفای را وارد کن"
+            class="w-full text-xs bg-white/50 rounded-xl px-3 py-2 outline-none placeholder:text-slate-400 border border-white/60 focus:border-indigo-300">
+          <button id="spotifyImportBtn" class="ctrl-btn text-xs font-bold text-white bg-green-500 rounded-xl py-2 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> شبیه‌سازی پلی‌لیست
+          </button>
+          <p class="text-[10px] text-slate-400 leading-relaxed">از API رسمی اسپاتیفای استفاده نمی‌شود؛ ساختار و ظاهر پلی‌لیست به‌صورت نمایشی شبیه‌سازی می‌شود.</p>
+        </div>
       </div>
-    </header>
 
-    <!-- ===== گرید اصلی (Bento) ===== -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <!-- پلی‌لیست‌ها -->
+      <div class="flex-1 flex flex-col gap-2 min-h-0">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-slate-500 flex items-center gap-2">
+            <i class="fa-solid fa-list-ul text-indigo-400"></i> پلی‌لیست‌های من
+          </h3>
+          <button id="addPlaylistBtn" aria-label="افزودن پلی‌لیست جدید" class="ctrl-btn w-7 h-7 rounded-full glass-light flex items-center justify-center text-xs text-indigo-500">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        <div id="playlistTabs" class="flex flex-col gap-1.5 overflow-y-auto max-h-64"></div>
+      </div>
 
-      <!-- ===== ستون چپ: پلیر + ویژوالایزر ===== -->
-      <div class="lg:col-span-2 flex flex-col gap-5">
+      <!-- اطلاعات ذخیره‌سازی -->
+      <div class="text-[10px] text-slate-400 flex items-center gap-2 border-t border-white/50 pt-3">
+        <i class="fa-solid fa-floppy-disk"></i>
+        <span>تمام داده‌ها در LocalStorage مرورگر شما ذخیره می‌شود</span>
+      </div>
+    </aside>
 
-        <!-- کارت پلیر -->
-        <div class="glass rounded-3xl p-6 sm:p-8 flex flex-col gap-6 fade-up-delay1">
+    <!-- ================= محتوای اصلی ================= -->
+    <main class="flex-1 flex flex-col gap-5 min-w-0">
 
-          <div id="emptyState" class="flex flex-col items-center justify-center text-center py-10 gap-3">
+      <!-- هدر -->
+      <header class="flex items-center justify-between fade-up">
+        <div>
+          <h2 id="welcomeText" class="text-2xl sm:text-3xl font-extrabold text-slate-800">سلام 👋 خوش اومدی</h2>
+          <p class="text-sm text-slate-500 mt-1" id="playlistSubtitle">موزیک‌های خودت رو مدیریت کن</p>
+        </div>
+        <button id="openSidebar" aria-label="باز کردن منو" class="lg:hidden w-11 h-11 rounded-2xl glass-strong flex items-center justify-center text-indigo-500">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </header>
+
+      <!-- نمایش پلی‌لیست شبیه‌سازی‌شده اسپاتیفای -->
+      <div id="spotifyMockPanel" class="hidden glass rounded-3xl p-5 fade-up pop-in">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-slate-600 flex items-center gap-2">
+            <i class="fa-brands fa-spotify text-green-500"></i> پیش‌نمایش پلی‌لیست اسپاتیفای
+          </h3>
+          <button id="closeSpotifyMock" aria-label="بستن پیش‌نمایش" class="ctrl-btn w-7 h-7 rounded-full glass-light flex items-center justify-center text-xs">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="spotifyMockList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+      </div>
+
+      <!-- بنتو گرید اصلی -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 flex-1">
+
+        <!-- کارت آهنگ فعال -->
+        <div class="lg:col-span-2 glass rounded-3xl p-6 sm:p-8 flex flex-col gap-6 fade-up-delay1">
+
+          <div id="emptyState" class="flex flex-col items-center justify-center text-center py-10 gap-3 flex-1">
             <div class="w-20 h-20 rounded-full glass-strong flex items-center justify-center">
               <i class="fa-solid fa-music text-3xl text-indigo-400"></i>
             </div>
-            <p class="text-slate-500 text-sm">هنوز آهنگی ایمپورت نشده.<br>از پایین فایل‌های خودت رو اضافه کن.</p>
+            <p class="text-slate-500 text-sm">هنوز آهنگی ایمپورت نشده.<br>از سایدبار فایل‌های خودت رو اضافه کن.</p>
           </div>
 
-          <div id="playerArea" class="hidden flex-col gap-6">
-            <!-- کاور + اطلاعات آهنگ -->
+          <div id="playerArea" class="hidden flex-col gap-6 flex-1">
             <div class="flex flex-col sm:flex-row items-center gap-6">
               <div class="relative shrink-0">
                 <div class="w-36 h-36 sm:w-44 sm:h-44 rounded-full glass-strong p-2 cover-spin paused" id="coverSpin">
-                  <div id="coverImg" class="w-full h-full rounded-full border-4 border-white/60 flex items-center justify-center text-4xl text-white font-bold" style="background: linear-gradient(135deg, #a5b4fc, #f9a8d4);">
-                    <i class="fa-solid fa-music"></i>
+                  <div id="coverImg" class="w-full h-full rounded-full border-4 border-white/60 flex items-center justify-center text-4xl text-white font-bold overflow-hidden bg-cover bg-center" style="background: linear-gradient(135deg, #a5b4fc, #f9a8d4);">
+                    <i class="fa-solid fa-music" id="coverIcon"></i>
                   </div>
                 </div>
                 <div class="absolute inset-0 flex items-center justify-center">
@@ -256,10 +387,9 @@
               </div>
 
               <div class="flex-1 w-full text-center sm:text-right min-w-0">
-                <h2 id="trackTitle" class="text-xl sm:text-2xl font-extrabold mb-1 truncate text-slate-800">—</h2>
+                <h3 id="trackTitle" class="text-xl sm:text-2xl font-extrabold mb-1 truncate text-slate-800">—</h3>
                 <p id="trackArtist" class="text-slate-500 text-sm mb-4 truncate">—</p>
 
-                <!-- نوار پیشرفت -->
                 <input type="range" id="progressBar" min="0" max="100" value="0" class="w-full">
                 <div class="flex justify-between text-xs text-slate-500 mt-1.5 font-mono">
                   <span id="currentTime">0:00</span>
@@ -268,123 +398,124 @@
               </div>
             </div>
 
-            <!-- کنترلرها -->
-            <div class="flex items-center justify-center gap-3 sm:gap-5">
-              <button id="shuffleBtn" aria-label="پخش تصادفی" class="ctrl-btn w-10 h-10 rounded-full glass-light flex items-center justify-center text-slate-500 hover:text-indigo-500">
-                <i class="fa-solid fa-shuffle text-sm"></i>
-              </button>
-              <button id="prevBtn" aria-label="آهنگ قبلی" class="ctrl-btn w-12 h-12 rounded-full glass-light flex items-center justify-center text-lg text-slate-600">
-                <i class="fa-solid fa-backward-step"></i>
-              </button>
-              <button id="playBtn" aria-label="پخش / توقف" class="play-btn w-16 h-16 rounded-full bg-indigo-500 text-white flex items-center justify-center text-2xl shadow-lg">
-                <i class="fa-solid fa-play" id="playIcon"></i>
-              </button>
-              <button id="nextBtn" aria-label="آهنگ بعدی" class="ctrl-btn w-12 h-12 rounded-full glass-light flex items-center justify-center text-lg text-slate-600">
-                <i class="fa-solid fa-forward-step"></i>
-              </button>
-              <button id="repeatBtn" aria-label="تکرار" class="ctrl-btn w-10 h-10 rounded-full glass-light flex items-center justify-center text-slate-500 hover:text-indigo-500">
-                <i class="fa-solid fa-repeat text-sm"></i>
-              </button>
-            </div>
-
-            <!-- ولوم -->
-            <div class="flex items-center gap-4 pt-2 border-t border-white/50">
-              <i class="fa-solid fa-volume-low text-slate-400 text-sm"></i>
-              <input type="range" id="volumeBar" min="0" max="100" value="70" class="flex-1">
-              <i class="fa-solid fa-volume-high text-slate-400 text-sm"></i>
+            <!-- ویژوالایزر -->
+            <div class="glass-light rounded-2xl p-4">
+              <div class="visualizer" id="visualizer"></div>
             </div>
           </div>
         </div>
 
-        <!-- کارت اکولایزر -->
-        <div class="glass rounded-3xl p-6 sm:p-8 flex flex-col gap-4 fade-up-delay2">
-          <div class="flex items-center gap-2 text-slate-500">
-            <i class="fa-solid fa-wave-square text-sm"></i>
-            <h3 class="text-sm font-bold">اکولایزر</h3>
-          </div>
-          <div class="visualizer" id="visualizer">
-            <div class="bar" style="animation-duration: 0.6s;"></div>
-            <div class="bar" style="animation-duration: 0.9s;"></div>
-            <div class="bar" style="animation-duration: 0.5s;"></div>
-            <div class="bar" style="animation-duration: 1.1s;"></div>
-            <div class="bar" style="animation-duration: 0.7s;"></div>
-            <div class="bar" style="animation-duration: 0.4s;"></div>
-            <div class="bar" style="animation-duration: 1.2s;"></div>
-            <div class="bar" style="animation-duration: 0.65s;"></div>
-            <div class="bar" style="animation-duration: 0.85s;"></div>
-            <div class="bar" style="animation-duration: 0.55s;"></div>
-            <div class="bar" style="animation-duration: 1.0s;"></div>
-            <div class="bar" style="animation-duration: 0.75s;"></div>
-            <div class="bar" style="animation-duration: 0.95s;"></div>
-            <div class="bar" style="animation-duration: 0.45s;"></div>
-            <div class="bar" style="animation-duration: 1.05s;"></div>
-            <div class="bar" style="animation-duration: 0.6s;"></div>
-            <div class="bar" style="animation-duration: 0.8s;"></div>
-            <div class="bar" style="animation-duration: 0.5s;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== ستون راست: ایمپورت + پلی‌لیست ===== -->
-      <div class="flex flex-col gap-5">
-
-        <!-- کارت ایمپورت -->
-        <div class="glass rounded-3xl p-6 fade-up-delay1">
-          <h3 class="text-sm font-bold text-slate-600 mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-folder-open text-indigo-400"></i> ایمپورت آهنگ
-          </h3>
-          <div id="dropzone" class="dropzone glass-light rounded-2xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center text-center gap-2 py-8 px-4 cursor-pointer">
-            <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400"></i>
-            <p class="text-sm text-slate-500">فایل‌ها رو بکش و رها کن<br>یا کلیک کن</p>
-            <p class="text-xs text-slate-400">MP3 · WAV · OGG · M4A</p>
-          </div>
-          <input type="file" id="fileInput" accept="audio/*" multiple class="hidden">
-        </div>
-
-        <!-- کارت پلی‌لیست -->
-        <div class="glass rounded-3xl p-6 flex-1 flex flex-col gap-3 fade-up-delay2 min-h-[280px]">
+        <!-- پلی‌لیست فعال -->
+        <div class="glass rounded-3xl p-6 flex flex-col gap-3 fade-up-delay2 min-h-[320px]">
           <h3 class="text-sm font-bold text-slate-600 flex items-center gap-2">
-            <i class="fa-solid fa-list-ul text-indigo-400"></i> لیست پخش
+            <i class="fa-solid fa-record-vinyl text-indigo-400"></i>
+            <span id="currentPlaylistName">همه آهنگ‌ها</span>
             <span id="trackCount" class="mr-auto text-xs font-normal text-slate-400">0 آهنگ</span>
           </h3>
-          <div id="playlistItems" class="flex flex-col gap-2 overflow-y-auto max-h-[420px] pr-1">
+          <div id="playlistItems" class="flex flex-col gap-2 overflow-y-auto max-h-[460px] pr-1 flex-1">
             <p id="playlistEmpty" class="text-xs text-slate-400 text-center py-6">لیست پخش خالی است</p>
           </div>
         </div>
       </div>
+
+      <!-- ================= فوتر کنترلر ================= -->
+      <footer class="player-footer glass-strong rounded-3xl p-3 sm:p-4 flex items-center gap-3 sm:gap-5 fade-up-delay3">
+        <div class="flex items-center gap-3 min-w-0 w-44 sm:w-56 shrink-0">
+          <div class="w-12 h-12 rounded-xl shrink-0 overflow-hidden bg-cover bg-center flex items-center justify-center text-white" id="footerCover" style="background: linear-gradient(135deg, #a5b4fc, #f9a8d4);">
+            <i class="fa-solid fa-music text-sm" id="footerCoverIcon"></i>
+          </div>
+          <div class="min-w-0">
+            <p id="footerTitle" class="text-sm font-bold truncate text-slate-700">انتخاب نشده</p>
+            <p id="footerArtist" class="text-xs text-slate-400 truncate">—</p>
+          </div>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center gap-2 sm:gap-4">
+          <button id="shuffleBtn" aria-label="پخش تصادفی" class="ctrl-btn w-9 h-9 rounded-full glass-light flex items-center justify-center text-slate-500 hover:text-indigo-500 text-sm">
+            <i class="fa-solid fa-shuffle"></i>
+          </button>
+          <button id="prevBtn" aria-label="آهنگ قبلی" class="ctrl-btn w-10 h-10 rounded-full glass-light flex items-center justify-center text-slate-600">
+            <i class="fa-solid fa-backward-step"></i>
+          </button>
+          <button id="playBtn" aria-label="پخش / توقف" class="play-btn w-14 h-14 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xl shadow-lg shrink-0">
+            <i class="fa-solid fa-play" id="playIcon"></i>
+          </button>
+          <button id="nextBtn" aria-label="آهنگ بعدی" class="ctrl-btn w-10 h-10 rounded-full glass-light flex items-center justify-center text-slate-600">
+            <i class="fa-solid fa-forward-step"></i>
+          </button>
+          <button id="repeatBtn" aria-label="تکرار" class="ctrl-btn w-9 h-9 rounded-full glass-light flex items-center justify-center text-slate-500 hover:text-indigo-500 text-sm">
+            <i class="fa-solid fa-repeat"></i>
+          </button>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-2 w-40 shrink-0">
+          <i class="fa-solid fa-volume-low text-slate-400 text-xs"></i>
+          <input type="range" id="volumeBar" min="0" max="100" value="70" class="flex-1">
+          <i class="fa-solid fa-volume-high text-slate-400 text-xs"></i>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- مودال افزودن پلی‌لیست -->
+  <div id="addPlaylistModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.25);">
+    <div class="modal-anim glass-strong rounded-3xl p-6 w-full max-w-sm">
+      <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-plus text-indigo-500"></i> پلی‌لیست جدید</h3>
+      <input id="newPlaylistName" type="text" placeholder="مثلاً: بی‌کلام، راک، ورزشی..." class="w-full text-sm bg-white/60 rounded-xl px-3 py-2.5 outline-none placeholder:text-slate-400 border border-white/70 focus:border-indigo-300 mb-4">
+      <div class="flex gap-2">
+        <button id="cancelAddPlaylist" class="ctrl-btn flex-1 text-sm font-bold text-slate-500 bg-white/50 rounded-xl py-2.5">انصراف</button>
+        <button id="confirmAddPlaylist" class="ctrl-btn flex-1 text-sm font-bold text-white bg-indigo-500 rounded-xl py-2.5">ساخت پلی‌لیست</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال افزودن به پلی‌لیست -->
+  <div id="assignPlaylistModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0,0,0,0.25);">
+    <div class="modal-anim glass-strong rounded-3xl p-6 w-full max-w-sm">
+      <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-folder-tree text-indigo-500"></i> افزودن به پلی‌لیست</h3>
+      <div id="assignPlaylistList" class="flex flex-col gap-2 max-h-60 overflow-y-auto mb-4"></div>
+      <button id="closeAssignModal" class="ctrl-btn w-full text-sm font-bold text-slate-500 bg-white/50 rounded-xl py-2.5">بستن</button>
     </div>
   </div>
 
   <!-- المان صوتی پنهان -->
-  <audio id="audioPlayer"></audio>
+  <audio id="audioPlayer" crossorigin="anonymous"></audio>
 
 <script>
-/* ================== متغیرهای وضعیت ================== */
-let tracks = [];          // { title, fileName, ext, url, color1, color2, duration }
-let currentIndex = -1;
-let isPlaying = false;
-let isShuffle = false;
-let repeatMode = 0; // 0: خاموش, 1: تکرار همه, 2: تکرار یکی
+/* ================== ثابت‌ها ================== */
+const STORAGE_KEY_TRACKS = 'musicpro_tracks';
+const STORAGE_KEY_PLAYLISTS = 'musicpro_playlists';
+const STORAGE_KEY_STATE = 'musicpro_state';
+const ALL_PLAYLIST_ID = 'all';
 
-/* پالت‌های پاستل برای کاور پیش‌فرض */
 const coverPalettes = [
-  ["#a5b4fc", "#f9a8d4"],
-  ["#99f6e4", "#a5b4fc"],
-  ["#fde68a", "#fca5a5"],
-  ["#bbf7d0", "#bfdbfe"],
-  ["#fbcfe8", "#ddd6fe"],
-  ["#fed7aa", "#fef08a"],
-  ["#c7d2fe", "#fbcfe8"]
+  ["#a5b4fc", "#f9a8d4"], ["#99f6e4", "#a5b4fc"], ["#fde68a", "#fca5a5"],
+  ["#bbf7d0", "#bfdbfe"], ["#fbcfe8", "#ddd6fe"], ["#fed7aa", "#fef08a"],
+  ["#c7d2fe", "#fbcfe8"], ["#fecaca", "#fde68a"], ["#bae6fd", "#ddd6fe"]
 ];
-
-/* جفت‌رنگ‌های پس‌زمینه برای حالت پخش */
 const bgPalettes = [
-  ["#eef2ff", "#fdf2f8", "#f0fdfa"],
-  ["#f0fdfa", "#eef2ff", "#fef3c7"],
-  ["#fdf2f8", "#fef9c3", "#eef2ff"],
-  ["#f0fdf4", "#eff6ff", "#fdf4ff"],
+  ["#eef2ff", "#fdf2f8", "#f0fdfa"], ["#f0fdfa", "#eef2ff", "#fef3c7"],
+  ["#fdf2f8", "#fef9c3", "#eef2ff"], ["#f0fdf4", "#eff6ff", "#fdf4ff"],
   ["#fff7ed", "#f0fdfa", "#fdf2f8"]
 ];
+
+/* ================== وضعیت برنامه ================== */
+// tracks: [{ id, title, artist, ext, fileName, color1, color2, cover (dataURL|null), blobUrl (در حافظه فقط) }]
+let tracks = [];
+let playlists = []; // [{ id, name, trackIds: [] }]
+let currentPlaylistId = ALL_PLAYLIST_ID;
+let currentTrackId = null;
+let isPlaying = false;
+let isShuffle = false;
+let repeatMode = 0;
+let pendingAssignTrackId = null;
+
+/* ================== Web Audio API ================== */
+let audioCtx = null;
+let analyser = null;
+let sourceNode = null;
+let visualizerBars = [];
+let rafId = null;
 
 /* ================== المان‌ها ================== */
 const audioPlayer = document.getElementById('audioPlayer');
@@ -401,6 +532,7 @@ const totalTimeEl = document.getElementById('totalTime');
 const trackTitle = document.getElementById('trackTitle');
 const trackArtist = document.getElementById('trackArtist');
 const coverImg = document.getElementById('coverImg');
+const coverIcon = document.getElementById('coverIcon');
 const coverSpin = document.getElementById('coverSpin');
 const visualizer = document.getElementById('visualizer');
 const emptyState = document.getElementById('emptyState');
@@ -410,10 +542,34 @@ const fileInput = document.getElementById('fileInput');
 const playlistItems = document.getElementById('playlistItems');
 const playlistEmpty = document.getElementById('playlistEmpty');
 const trackCount = document.getElementById('trackCount');
-const bodyBg = document.querySelector('.bg-animated');
+const currentPlaylistName = document.getElementById('currentPlaylistName');
+const playlistSubtitle = document.getElementById('playlistSubtitle');
+const playlistTabs = document.getElementById('playlistTabs');
+const bgLayer = document.getElementById('bgLayer');
 const blob1 = document.getElementById('blob1');
 const blob2 = document.getElementById('blob2');
 const blob3 = document.getElementById('blob3');
+const footerTitle = document.getElementById('footerTitle');
+const footerArtist = document.getElementById('footerArtist');
+const footerCover = document.getElementById('footerCover');
+const footerCoverIcon = document.getElementById('footerCoverIcon');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+const openSidebarBtn = document.getElementById('openSidebar');
+const closeSidebarBtn = document.getElementById('closeSidebar');
+const addPlaylistBtn = document.getElementById('addPlaylistBtn');
+const addPlaylistModal = document.getElementById('addPlaylistModal');
+const newPlaylistName = document.getElementById('newPlaylistName');
+const cancelAddPlaylist = document.getElementById('cancelAddPlaylist');
+const confirmAddPlaylist = document.getElementById('confirmAddPlaylist');
+const assignPlaylistModal = document.getElementById('assignPlaylistModal');
+const assignPlaylistList = document.getElementById('assignPlaylistList');
+const closeAssignModal = document.getElementById('closeAssignModal');
+const spotifyInput = document.getElementById('spotifyInput');
+const spotifyImportBtn = document.getElementById('spotifyImportBtn');
+const spotifyMockPanel = document.getElementById('spotifyMockPanel');
+const spotifyMockList = document.getElementById('spotifyMockList');
+const closeSpotifyMock = document.getElementById('closeSpotifyMock');
 
 /* ================== توابع کمکی ================== */
 function formatTime(sec) {
@@ -422,247 +578,545 @@ function formatTime(sec) {
   const s = Math.floor(sec % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
-
 function getFileExt(name) {
   const parts = name.split('.');
   return parts.length > 1 ? parts.pop().toUpperCase() : 'فایل';
 }
-
 function getCleanTitle(fileName) {
   return fileName.replace(/\.[^/.]+$/, '');
 }
-
 function randomPalette(arr, index) {
   return arr[index % arr.length];
 }
+function uid() {
+  return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
 
-/* ================== ایمپورت فایل‌ها ================== */
-function handleFiles(fileList) {
-  const files = Array.from(fileList).filter(f => f.type.startsWith('audio/') || /\.(mp3|wav|ogg|m4a|flac|aac)$/i.test(f.name));
-  if (files.length === 0) return;
+/* ================== ذخیره و بازیابی (LocalStorage) ================== */
+// توجه: blob واقعی فایل صوتی در LocalStorage ذخیره نمی‌شود (محدودیت حجم).
+// فقط متادیتا، کاور (به صورت dataURL کوچک) و اطلاعات پلی‌لیست‌ها ذخیره می‌شود.
+// پس از رفرش، کاربر باید فایل صوتی را دوباره ایمپورت کند تا پخش فعال شود،
+// اما اطلاعات و دسته‌بندی پلی‌لیست‌ها حفظ می‌ماند.
+function saveToStorage() {
+  try {
+    const trackMeta = tracks.map(t => ({
+      id: t.id, title: t.title, artist: t.artist, ext: t.ext, fileName: t.fileName,
+      color1: t.color1, color2: t.color2, cover: t.cover, duration: t.duration || 0
+    }));
+    localStorage.setItem(STORAGE_KEY_TRACKS, JSON.stringify(trackMeta));
+    localStorage.setItem(STORAGE_KEY_PLAYLISTS, JSON.stringify(playlists));
+    localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({
+      currentTrackId, currentPlaylistId, isShuffle, repeatMode,
+      volume: audioPlayer.volume, lastTime: audioPlayer.currentTime || 0
+    }));
+  } catch (e) {
+    console.warn('ذخیره در LocalStorage ناموفق بود:', e);
+  }
+}
 
-  files.forEach((file) => {
-    const url = URL.createObjectURL(file);
-    const palette = randomPalette(coverPalettes, tracks.length);
-    const track = {
-      title: getCleanTitle(file.name),
-      ext: getFileExt(file.name),
-      url: url,
-      color1: palette[0],
-      color2: palette[1],
-      duration: 0
-    };
-    tracks.push(track);
+function loadFromStorage() {
+  try {
+    const t = localStorage.getItem(STORAGE_KEY_TRACKS);
+    const p = localStorage.getItem(STORAGE_KEY_PLAYLISTS);
+    const s = localStorage.getItem(STORAGE_KEY_STATE);
+    if (t) tracks = JSON.parse(t).map(tr => ({ ...tr, blobUrl: null, missing: true }));
+    if (p) playlists = JSON.parse(p);
+    if (s) {
+      const state = JSON.parse(s);
+      currentPlaylistId = state.currentPlaylistId || ALL_PLAYLIST_ID;
+      isShuffle = !!state.isShuffle;
+      repeatMode = state.repeatMode || 0;
+      if (typeof state.volume === 'number') {
+        audioPlayer.volume = state.volume;
+        volumeBar.value = Math.round(state.volume * 100);
+      }
+    }
+  } catch (e) {
+    console.warn('بازیابی از LocalStorage ناموفق بود:', e);
+  }
+}
+
+/* ================== مدیریت پلی‌لیست‌ها ================== */
+function getCurrentPlaylistTracks() {
+  if (currentPlaylistId === ALL_PLAYLIST_ID) return tracks;
+  const pl = playlists.find(p => p.id === currentPlaylistId);
+  if (!pl) return tracks;
+  return tracks.filter(t => pl.trackIds.includes(t.id));
+}
+
+function renderPlaylistTabs() {
+  playlistTabs.innerHTML = '';
+
+  const allTab = document.createElement('button');
+  allTab.className = `playlist-tab ctrl-btn text-xs font-bold text-right rounded-xl px-3 py-2 flex items-center justify-between glass-light ${currentPlaylistId === ALL_PLAYLIST_ID ? 'active-playlist' : 'text-slate-600'}`;
+  allTab.innerHTML = `<span><i class="fa-solid fa-layer-group ml-1"></i> همه آهنگ‌ها</span><span class="text-[10px] opacity-70">${tracks.length}</span>`;
+  allTab.addEventListener('click', () => switchPlaylist(ALL_PLAYLIST_ID));
+  playlistTabs.appendChild(allTab);
+
+  playlists.forEach(pl => {
+    const tab = document.createElement('div');
+    tab.className = `playlist-tab flex items-center gap-1 rounded-xl px-1 py-1 glass-light ${currentPlaylistId === pl.id ? 'active-playlist' : ''}`;
+    const btn = document.createElement('button');
+    btn.className = `ctrl-btn flex-1 text-xs font-bold text-right px-2 py-1.5 flex items-center justify-between ${currentPlaylistId === pl.id ? '' : 'text-slate-600'}`;
+    btn.innerHTML = `<span class="truncate"><i class="fa-solid fa-music ml-1"></i> ${pl.name}</span><span class="text-[10px] opacity-70 shrink-0">${pl.trackIds.length}</span>`;
+    btn.addEventListener('click', () => switchPlaylist(pl.id));
+
+    const delBtn = document.createElement('button');
+    delBtn.setAttribute('aria-label', `حذف پلی‌لیست ${pl.name}`);
+    delBtn.className = `ctrl-btn w-6 h-6 rounded-full flex items-center justify-center text-[10px] shrink-0 ${currentPlaylistId === pl.id ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-rose-400'}`;
+    delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deletePlaylist(pl.id);
+    });
+
+    tab.appendChild(btn);
+    tab.appendChild(delBtn);
+    playlistTabs.appendChild(tab);
   });
+}
 
+function switchPlaylist(id) {
+  currentPlaylistId = id;
+  if (id === ALL_PLAYLIST_ID) {
+    currentPlaylistName.textContent = 'همه آهنگ‌ها';
+    playlistSubtitle.textContent = 'موزیک‌های خودت رو مدیریت کن';
+  } else {
+    const pl = playlists.find(p => p.id === id);
+    currentPlaylistName.textContent = pl ? pl.name : 'پلی‌لیست';
+    playlistSubtitle.textContent = pl ? `در حال مشاهده پلی‌لیست «${pl.name}»` : '';
+  }
+  renderPlaylistTabs();
   renderPlaylist();
+  saveToStorage();
+}
 
-  // اگر این اولین ایمپورت است، آهنگ اول را بار کن
-  if (currentIndex === -1 && tracks.length > 0) {
-    currentIndex = 0;
-    loadTrack(false);
-    emptyState.classList.add('hidden');
-    playerArea.classList.remove('hidden');
-    playerArea.classList.add('flex');
-    playerArea.classList.add('pop-in');
+function deletePlaylist(id) {
+  playlists = playlists.filter(p => p.id !== id);
+  if (currentPlaylistId === id) switchPlaylist(ALL_PLAYLIST_ID);
+  else { renderPlaylistTabs(); saveToStorage(); }
+}
+
+addPlaylistBtn.addEventListener('click', () => {
+  newPlaylistName.value = '';
+  addPlaylistModal.classList.remove('hidden');
+  setTimeout(() => newPlaylistName.focus(), 50);
+});
+cancelAddPlaylist.addEventListener('click', () => addPlaylistModal.classList.add('hidden'));
+addPlaylistModal.addEventListener('click', (e) => { if (e.target === addPlaylistModal) addPlaylistModal.classList.add('hidden'); });
+confirmAddPlaylist.addEventListener('click', () => {
+  const name = newPlaylistName.value.trim();
+  if (!name) return;
+  playlists.push({ id: uid(), name, trackIds: [] });
+  addPlaylistModal.classList.add('hidden');
+  renderPlaylistTabs();
+  saveToStorage();
+});
+newPlaylistName.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmAddPlaylist.click(); });
+
+/* ================== مودال افزودن آهنگ به پلی‌لیست ================== */
+function openAssignModal(trackId) {
+  pendingAssignTrackId = trackId;
+  assignPlaylistList.innerHTML = '';
+  if (playlists.length === 0) {
+    assignPlaylistList.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">هنوز پلی‌لیستی نساختی. از سایدبار یکی بساز.</p>';
+  }
+  playlists.forEach(pl => {
+    const has = pl.trackIds.includes(trackId);
+    const row = document.createElement('label');
+    row.className = 'flex items-center justify-between gap-2 glass-light rounded-xl px-3 py-2 cursor-pointer';
+    row.innerHTML = `
+      <span class="text-sm text-slate-600 truncate"><i class="fa-solid fa-music text-indigo-400 ml-1"></i> ${pl.name}</span>
+      <input type="checkbox" data-pl="${pl.id}" ${has ? 'checked' : ''} class="w-4 h-4 accent-indigo-500">
+    `;
+    row.querySelector('input').addEventListener('change', (e) => {
+      togglePlaylistMembership(pl.id, trackId, e.target.checked);
+    });
+    assignPlaylistList.appendChild(row);
+  });
+  assignPlaylistModal.classList.remove('hidden');
+}
+closeAssignModal.addEventListener('click', () => assignPlaylistModal.classList.add('hidden'));
+assignPlaylistModal.addEventListener('click', (e) => { if (e.target === assignPlaylistModal) assignPlaylistModal.classList.add('hidden'); });
+
+function togglePlaylistMembership(playlistId, trackId, shouldHave) {
+  const pl = playlists.find(p => p.id === playlistId);
+  if (!pl) return;
+  const idx = pl.trackIds.indexOf(trackId);
+  if (shouldHave && idx === -1) pl.trackIds.push(trackId);
+  if (!shouldHave && idx !== -1) pl.trackIds.splice(idx, 1);
+  renderPlaylistTabs();
+  if (currentPlaylistId === playlistId) renderPlaylist();
+  saveToStorage();
+}
+
+/* ================== استخراج متادیتا (jsmediatags) ================== */
+function readMetadata(file, track) {
+  return new Promise((resolve) => {
+    if (typeof jsmediatags === 'undefined') return resolve();
+    jsmediatags.read(file, {
+      onSuccess: (tag) => {
+        const tags = tag.tags || {};
+        if (tags.title) track.title = tags.title;
+        if (tags.artist) track.artist = tags.artist;
+        if (tags.picture) {
+          try {
+            const { data, format } = tags.picture;
+            let base64 = '';
+            for (let i = 0; i < data.length; i++) base64 += String.fromCharCode(data[i]);
+            track.cover = `data:${format};base64,${window.btoa(base64)}`;
+          } catch (e) { /* بی‌خیال کاور می‌شویم */ }
+        }
+        resolve();
+      },
+      onError: () => resolve()
+    });
+  });
+}
+
+/* ================== ایمپورت فایل‌ها و ZIP ================== */
+async function handleFiles(fileList) {
+  const allFiles = Array.from(fileList);
+  const zipFiles = allFiles.filter(f => /\.zip$/i.test(f.name) || f.type === 'application/zip');
+  const audioFiles = allFiles.filter(f => f.type.startsWith('audio/') || /\.(mp3|wav|ogg|m4a|flac|aac)$/i.test(f.name));
+
+  for (const file of audioFiles) {
+    await addTrackFromFile(file);
+  }
+
+  for (const zipFile of zipFiles) {
+    await importFromZip(zipFile);
+  }
+
+  renderPlaylistTabs();
+  renderPlaylist();
+  saveToStorage();
+
+  if (!currentTrackId && tracks.length > 0) {
+    selectTrack(tracks[0].id, false);
+  }
+}
+
+async function addTrackFromFile(file) {
+  const url = URL.createObjectURL(file);
+  const palette = randomPalette(coverPalettes, tracks.length);
+  const track = {
+    id: uid(),
+    title: getCleanTitle(file.name),
+    artist: 'هنرمند ناشناس',
+    ext: getFileExt(file.name),
+    fileName: file.name,
+    url, blobUrl: url,
+    color1: palette[0], color2: palette[1],
+    cover: null, duration: 0
+  };
+  await readMetadata(file, track);
+  tracks.push(track);
+}
+
+async function importFromZip(zipFile) {
+  if (typeof JSZip === 'undefined') {
+    alert('کتابخانه JSZip در دسترس نیست.');
+    return;
+  }
+  try {
+    const zip = await JSZip.loadAsync(zipFile);
+    const entries = Object.values(zip.files).filter(f => !f.dir && /\.(mp3|wav|ogg|m4a|flac|aac)$/i.test(f.name));
+    for (const entry of entries) {
+      const blob = await entry.async('blob');
+      const fileName = entry.name.split('/').pop();
+      const file = new File([blob], fileName, { type: blob.type || 'audio/mpeg' });
+      await addTrackFromFile(file);
+    }
+    if (entries.length === 0) {
+      alert('هیچ فایل صوتی معتبری داخل ZIP پیدا نشد.');
+    }
+  } catch (e) {
+    console.error(e);
+    alert('خوانش فایل ZIP با خطا مواجه شد.');
   }
 }
 
 dropzone.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-['dragenter', 'dragover'].forEach(evt => {
-  dropzone.addEventListener(evt, (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropzone.classList.add('dragover');
-  });
-});
-['dragleave', 'drop'].forEach(evt => {
-  dropzone.addEventListener(evt, (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dropzone.classList.remove('dragover');
-  });
-});
+['dragenter', 'dragover'].forEach(evt => dropzone.addEventListener(evt, (e) => {
+  e.preventDefault(); e.stopPropagation(); dropzone.classList.add('dragover');
+}));
+['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, (e) => {
+  e.preventDefault(); e.stopPropagation(); dropzone.classList.remove('dragover');
+}));
 dropzone.addEventListener('drop', (e) => {
   const dt = e.dataTransfer;
   if (dt && dt.files) handleFiles(dt.files);
 });
 
-/* ================== رندر لیست پخش ================== */
+/* ================== رندر کارت‌های پلی‌لیست ================== */
+function trackCoverStyle(track) {
+  if (track.cover) return `background-image:url('${track.cover}'); background-size:cover; background-position:center;`;
+  return `background: linear-gradient(135deg, ${track.color1}, ${track.color2});`;
+}
+
 function renderPlaylist() {
-  trackCount.textContent = `${tracks.length} آهنگ`;
-  if (tracks.length === 0) {
-    playlistEmpty.classList.remove('hidden');
+  const list = getCurrentPlaylistTracks();
+  trackCount.textContent = `${list.length} آهنگ`;
+
+  if (list.length === 0) {
     playlistItems.innerHTML = '';
     playlistItems.appendChild(playlistEmpty);
+    playlistEmpty.classList.remove('hidden');
     return;
   }
   playlistEmpty.classList.add('hidden');
   playlistItems.innerHTML = '';
 
-  tracks.forEach((track, i) => {
+  list.forEach((track) => {
+    const isActive = track.id === currentTrackId;
     const item = document.createElement('div');
-    item.className = `track-card flex items-center gap-3 p-3 rounded-2xl cursor-pointer ${i === currentIndex ? 'glass-strong active' : 'hover:bg-white/30'}`;
+    item.className = `track-card flex items-center gap-3 p-3 rounded-2xl cursor-pointer ${isActive ? 'glass-strong active' : 'hover:bg-white/30'}`;
     item.innerHTML = `
-      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-sm shrink-0" style="background: linear-gradient(135deg, ${track.color1}, ${track.color2});">
-        <i class="fa-solid ${i === currentIndex && isPlaying ? 'fa-volume-high' : 'fa-music'}"></i>
+      <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-sm shrink-0" style="${trackCoverStyle(track)}">
+        ${track.cover ? '' : `<i class="fa-solid ${isActive && isPlaying ? 'fa-volume-high' : 'fa-music'}"></i>`}
       </div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-bold truncate ${i === currentIndex ? 'text-indigo-600' : 'text-slate-700'}">${track.title}</p>
-        <p class="text-xs text-slate-400 truncate">${track.ext}</p>
+        <p class="text-sm font-bold truncate ${isActive ? 'text-indigo-600' : 'text-slate-700'}">${track.title}${track.missing ? ' <span class=\"text-[10px] text-amber-500\">(نیاز به ایمپورت دوباره)</span>' : ''}</p>
+        <p class="text-xs text-slate-400 truncate">${track.artist} · ${track.ext}</p>
       </div>
-      <button data-idx="${i}" aria-label="حذف آهنگ" class="remove-btn ctrl-btn w-7 h-7 rounded-full glass-light flex items-center justify-center text-xs text-slate-400 hover:text-rose-400 shrink-0">
+      <button data-action="assign" aria-label="افزودن به پلی‌لیست" class="ctrl-btn w-7 h-7 rounded-full glass-light flex items-center justify-center text-xs text-slate-400 hover:text-indigo-500 shrink-0">
+        <i class="fa-solid fa-folder-plus"></i>
+      </button>
+      <button data-action="remove" aria-label="حذف آهنگ" class="ctrl-btn w-7 h-7 rounded-full glass-light flex items-center justify-center text-xs text-slate-400 hover:text-rose-400 shrink-0">
         <i class="fa-solid fa-xmark"></i>
       </button>
     `;
     item.addEventListener('click', (e) => {
-      if (e.target.closest('.remove-btn')) return;
-      if (i !== currentIndex) {
-        currentIndex = i;
-        loadTrack(true);
-      }
+      const action = e.target.closest('[data-action]')?.dataset.action;
+      if (action === 'assign') return openAssignModal(track.id);
+      if (action === 'remove') return removeTrack(track.id);
+      selectTrack(track.id, true);
     });
     playlistItems.appendChild(item);
   });
-
-  // دکمه‌های حذف
-  playlistItems.querySelectorAll('.remove-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const idx = parseInt(btn.dataset.idx, 10);
-      removeTrack(idx);
-    });
-  });
 }
 
-function removeTrack(idx) {
-  URL.revokeObjectURL(tracks[idx].url);
-  tracks.splice(idx, 1);
+/* ================== انتخاب و حذف آهنگ ================== */
+function removeTrack(trackId) {
+  const t = tracks.find(tr => tr.id === trackId);
+  if (t && t.blobUrl) URL.revokeObjectURL(t.blobUrl);
+  tracks = tracks.filter(tr => tr.id !== trackId);
+  playlists.forEach(pl => { pl.trackIds = pl.trackIds.filter(id => id !== trackId); });
 
-  if (tracks.length === 0) {
-    currentIndex = -1;
+  if (currentTrackId === trackId) {
+    currentTrackId = null;
     pausePlayback();
-    audioPlayer.src = '';
+    audioPlayer.removeAttribute('src');
     emptyState.classList.remove('hidden');
     playerArea.classList.add('hidden');
     playerArea.classList.remove('flex');
     resetBackground();
-  } else if (idx === currentIndex) {
-    currentIndex = Math.min(idx, tracks.length - 1);
-    loadTrack(isPlaying);
-  } else if (idx < currentIndex) {
-    currentIndex--;
+    resetFooter();
+    if (tracks.length > 0) selectTrack(tracks[0].id, false);
   }
+  renderPlaylistTabs();
   renderPlaylist();
+  saveToStorage();
 }
 
-/* ================== بارگذاری آهنگ ================== */
-function loadTrack(autoplay = false) {
-  const track = tracks[currentIndex];
-  trackTitle.textContent = track.title;
-  trackArtist.textContent = `فایل ${track.ext}`;
-  coverImg.style.background = `linear-gradient(135deg, ${track.color1}, ${track.color2})`;
+function resetFooter() {
+  footerTitle.textContent = 'انتخاب نشده';
+  footerArtist.textContent = '—';
+  footerCover.style.cssText = 'background: linear-gradient(135deg, #a5b4fc, #f9a8d4);';
+  footerCoverIcon.classList.remove('hidden');
+}
 
-  audioPlayer.src = track.url;
+function resetBackground() {
+  bgLayer.style.background = 'linear-gradient(135deg, #eef2ff 0%, #fdf2f8 50%, #f0fdfa 100%)';
+  blob1.style.background = '#a5b4fc';
+  blob2.style.background = '#f9a8d4';
+  blob3.style.background = '#99f6e4';
+}
+
+function selectTrack(trackId, autoplay) {
+  const track = tracks.find(t => t.id === trackId);
+  if (!track) return;
+
+  if (track.missing && !track.blobUrl) {
+    alert('فایل صوتی این آهنگ در حافظه موجود نیست. لطفاً دوباره ایمپورت کن تا قابل پخش شود.');
+    currentTrackId = trackId;
+    renderTrackInfo(track);
+    renderPlaylist();
+    saveToStorage();
+    return;
+  }
+
+  currentTrackId = trackId;
+  renderTrackInfo(track);
+
+  audioPlayer.src = track.blobUrl || track.url;
   audioPlayer.load();
-
-  // تغییر نرم پس‌زمینه هماهنگ با کاور آهنگ
-  const palette = bgPalettes[currentIndex % bgPalettes.length];
-  bodyBg.style.background = `linear-gradient(135deg, ${palette[0]} 0%, ${palette[1]} 50%, ${palette[2]} 100%)`;
-  blob1.style.background = track.color1;
-  blob2.style.background = track.color2;
-  blob3.style.background = palette[2];
-
-  renderPlaylist();
 
   if (autoplay) {
     audioPlayer.play().then(() => startPlayback()).catch(() => pausePlayback());
   } else {
     pausePlayback();
   }
+  renderPlaylist();
+  saveToStorage();
 }
 
-function resetBackground() {
-  bodyBg.style.background = 'linear-gradient(135deg, #eef2ff 0%, #fdf2f8 50%, #f0fdfa 100%)';
-  blob1.style.background = '#a5b4fc';
-  blob2.style.background = '#f9a8d4';
-  blob3.style.background = '#99f6e4';
+function renderTrackInfo(track) {
+  trackTitle.textContent = track.title;
+  trackArtist.textContent = track.artist || '—';
+  footerTitle.textContent = track.title;
+  footerArtist.textContent = track.artist || '—';
+
+  emptyState.classList.add('hidden');
+  playerArea.classList.remove('hidden');
+  playerArea.classList.add('flex');
+
+  if (track.cover) {
+    coverImg.style.cssText = `background-image:url('${track.cover}'); background-size:cover; background-position:center;`;
+    footerCover.style.cssText = `background-image:url('${track.cover}'); background-size:cover; background-position:center;`;
+    coverIcon.classList.add('hidden');
+    footerCoverIcon.classList.add('hidden');
+  } else {
+    coverImg.style.cssText = `background: linear-gradient(135deg, ${track.color1}, ${track.color2});`;
+    footerCover.style.cssText = `background: linear-gradient(135deg, ${track.color1}, ${track.color2});`;
+    coverIcon.classList.remove('hidden');
+    footerCoverIcon.classList.remove('hidden');
+  }
+
+  const idx = tracks.findIndex(t => t.id === track.id);
+  const palette = bgPalettes[idx % bgPalettes.length];
+  bgLayer.style.background = `linear-gradient(135deg, ${palette[0]} 0%, ${palette[1]} 50%, ${palette[2]} 100%)`;
+  blob1.style.background = track.color1;
+  blob2.style.background = track.color2;
+  blob3.style.background = palette[2];
 }
 
 /* ================== پخش / توقف ================== */
+function setupAudioGraph() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    sourceNode = audioCtx.createMediaElementSource(audioPlayer);
+    sourceNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+
+    const bufferLength = analyser.frequencyBinCount;
+    visualizer.innerHTML = '';
+    visualizerBars = [];
+    for (let i = 0; i < bufferLength; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      visualizer.appendChild(bar);
+      visualizerBars.push(bar);
+    }
+  } catch (e) {
+    console.warn('Web Audio API در دسترس نیست:', e);
+  }
+}
+
+function drawVisualizer() {
+  if (!analyser) return;
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+  analyser.getByteFrequencyData(dataArray);
+  for (let i = 0; i < visualizerBars.length; i++) {
+    const value = dataArray[i] || 0;
+    const height = Math.max(4, (value / 255) * 70);
+    visualizerBars[i].style.height = height + 'px';
+  }
+  rafId = requestAnimationFrame(drawVisualizer);
+}
+
+function stopVisualizerAnim() {
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+  visualizerBars.forEach(b => b.style.height = '4px');
+}
+
 function startPlayback() {
   isPlaying = true;
   playIcon.className = 'fa-solid fa-pause';
-  visualizer.classList.add('playing');
   coverSpin.classList.remove('paused');
+  setupAudioGraph();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  if (analyser) {
+    cancelAnimationFrame(rafId);
+    drawVisualizer();
+  }
   renderPlaylist();
 }
 
 function pausePlayback() {
   isPlaying = false;
   playIcon.className = 'fa-solid fa-play';
-  visualizer.classList.remove('playing');
   coverSpin.classList.add('paused');
+  stopVisualizerAnim();
   renderPlaylist();
 }
 
 function togglePlay() {
-  if (currentIndex === -1) return;
+  if (!currentTrackId) return;
+  const track = tracks.find(t => t.id === currentTrackId);
+  if (!track || (track.missing && !track.blobUrl)) {
+    alert('فایل صوتی این آهنگ موجود نیست. دوباره ایمپورتش کن.');
+    return;
+  }
   if (isPlaying) {
     audioPlayer.pause();
     pausePlayback();
   } else {
+    setupAudioGraph();
     audioPlayer.play().then(() => startPlayback()).catch(() => {});
   }
 }
 
 /* ================== ناوبری آهنگ‌ها ================== */
 function goNext(continuePlaying = isPlaying) {
-  if (tracks.length === 0) return;
+  const list = getCurrentPlaylistTracks();
+  if (list.length === 0) return;
+  let idx = list.findIndex(t => t.id === currentTrackId);
+  if (idx === -1) idx = 0;
+
   if (isShuffle) {
-    let newIndex;
-    do {
-      newIndex = Math.floor(Math.random() * tracks.length);
-    } while (newIndex === currentIndex && tracks.length > 1);
-    currentIndex = newIndex;
+    let newIdx;
+    do { newIdx = Math.floor(Math.random() * list.length); } while (newIdx === idx && list.length > 1);
+    idx = newIdx;
   } else {
-    if (currentIndex === tracks.length - 1) {
-      if (repeatMode === 0) {
-        currentIndex = 0;
-        loadTrack(false);
-        return;
-      }
-      currentIndex = 0;
-    } else {
-      currentIndex++;
-    }
+    if (idx === list.length - 1) {
+      if (repeatMode === 0) { selectTrack(list[0].id, false); return; }
+      idx = 0;
+    } else idx++;
   }
-  loadTrack(continuePlaying);
+  selectTrack(list[idx].id, continuePlaying);
 }
 
 function goPrev() {
-  if (tracks.length === 0) return;
-  if (isShuffle) {
-    currentIndex = Math.floor(Math.random() * tracks.length);
-  } else {
-    currentIndex = currentIndex === 0 ? tracks.length - 1 : currentIndex - 1;
-  }
-  loadTrack(isPlaying);
+  const list = getCurrentPlaylistTracks();
+  if (list.length === 0) return;
+  let idx = list.findIndex(t => t.id === currentTrackId);
+  if (idx === -1) idx = 0;
+
+  if (isShuffle) idx = Math.floor(Math.random() * list.length);
+  else idx = idx === 0 ? list.length - 1 : idx - 1;
+
+  selectTrack(list[idx].id, isPlaying);
 }
 
 /* ================== رویدادهای صوتی ================== */
 audioPlayer.addEventListener('loadedmetadata', () => {
   totalTimeEl.textContent = formatTime(audioPlayer.duration);
   progressBar.max = Math.floor(audioPlayer.duration) || 100;
+  const track = tracks.find(t => t.id === currentTrackId);
+  if (track) track.duration = audioPlayer.duration;
 });
-
 audioPlayer.addEventListener('timeupdate', () => {
   progressBar.value = audioPlayer.currentTime;
   currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
 });
-
 audioPlayer.addEventListener('ended', () => {
   if (repeatMode === 2) {
     audioPlayer.currentTime = 0;
@@ -680,21 +1134,16 @@ prevBtn.addEventListener('click', () => goPrev());
 shuffleBtn.addEventListener('click', () => {
   isShuffle = !isShuffle;
   shuffleBtn.classList.toggle('active-toggle', isShuffle);
+  saveToStorage();
 });
 
 repeatBtn.addEventListener('click', () => {
   repeatMode = (repeatMode + 1) % 3;
   const icon = repeatBtn.querySelector('i');
-  if (repeatMode === 0) {
-    icon.className = 'fa-solid fa-repeat text-sm';
-    repeatBtn.classList.remove('active-toggle');
-  } else if (repeatMode === 1) {
-    icon.className = 'fa-solid fa-repeat text-sm';
-    repeatBtn.classList.add('active-toggle');
-  } else {
-    icon.className = 'fa-solid fa-repeat-1 text-sm';
-    repeatBtn.classList.add('active-toggle');
-  }
+  if (repeatMode === 0) { icon.className = 'fa-solid fa-repeat'; repeatBtn.classList.remove('active-toggle'); }
+  else if (repeatMode === 1) { icon.className = 'fa-solid fa-repeat'; repeatBtn.classList.add('active-toggle'); }
+  else { icon.className = 'fa-solid fa-repeat-1'; repeatBtn.classList.add('active-toggle'); }
+  saveToStorage();
 });
 
 progressBar.addEventListener('input', (e) => {
@@ -706,18 +1155,109 @@ volumeBar.addEventListener('input', (e) => {
   const val = parseInt(e.target.value, 10);
   audioPlayer.volume = val / 100;
   const volIconLow = volumeBar.previousElementSibling;
-  if (val === 0) {
-    volIconLow.className = 'fa-solid fa-volume-xmark text-slate-400 text-sm';
-  } else if (val < 50) {
-    volIconLow.className = 'fa-solid fa-volume-low text-slate-400 text-sm';
-  } else {
-    volIconLow.className = 'fa-solid fa-volume-high text-slate-400 text-sm';
-  }
+  if (val === 0) volIconLow.className = 'fa-solid fa-volume-xmark text-slate-400 text-xs';
+  else if (val < 50) volIconLow.className = 'fa-solid fa-volume-low text-slate-400 text-xs';
+  else volIconLow.className = 'fa-solid fa-volume-high text-slate-400 text-xs';
+  saveToStorage();
 });
 
+/* ================== سایدبار موبایل ================== */
+openSidebarBtn.addEventListener('click', () => {
+  sidebar.classList.add('open');
+  sidebarOverlay.classList.add('show');
+});
+function closeSidebarFn() {
+  sidebar.classList.remove('open');
+  sidebarOverlay.classList.remove('show');
+}
+closeSidebarBtn.addEventListener('click', closeSidebarFn);
+sidebarOverlay.addEventListener('click', closeSidebarFn);
+
+/* ================== ایمپورت شبیه‌سازی شده اسپاتیفای ================== */
+const mockSpotifyTracks = [
+  { title: 'Sunset Drive', artist: 'Luna Waves', color: ['#fed7aa', '#fca5a5'] },
+  { title: 'Night Owl', artist: 'Echo Park', color: ['#c7d2fe', '#a5b4fc'] },
+  { title: 'Golden Hour', artist: 'Mira & Co', color: ['#fde68a', '#fed7aa'] },
+  { title: 'Quiet Streets', artist: 'Soft Static', color: ['#bae6fd', '#ddd6fe'] },
+  { title: 'Afterglow', artist: 'Velvet Sky', color: ['#fbcfe8', '#f9a8d4'] },
+  { title: 'Paper Planes (Lofi)', artist: 'Hazy Days', color: ['#bbf7d0', '#99f6e4'] }
+];
+
+spotifyImportBtn.addEventListener('click', () => {
+  const link = spotifyInput.value.trim();
+  if (!link) {
+    alert('لطفاً یک لینک پلی‌لیست اسپاتیفای وارد کن (شبیه‌سازی نمایشی است).');
+    return;
+  }
+  renderSpotifyMock(link);
+});
+closeSpotifyMock.addEventListener('click', () => spotifyMockPanel.classList.add('hidden'));
+
+function renderSpotifyMock(link) {
+  spotifyMockList.innerHTML = '';
+  let title = 'پلی‌لیست اسپاتیفای';
+  try {
+    const idMatch = link.match(/playlist\/([a-zA-Z0-9]+)/);
+    if (idMatch) title = `پلی‌لیست #${idMatch[1].slice(0, 6)}`;
+  } catch (e) {}
+
+  const header = document.createElement('div');
+  header.className = 'sm:col-span-2 flex items-center gap-2 text-xs text-slate-500 mb-1';
+  header.innerHTML = `<i class="fa-brands fa-spotify text-green-500"></i> پیش‌نمایش شبیه‌سازی‌شده برای: <span class="font-bold text-slate-600 truncate">${title}</span>`;
+  spotifyMockList.appendChild(header);
+
+  mockSpotifyTracks.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'flex items-center gap-3 glass-light rounded-2xl p-3';
+    card.innerHTML = `
+      <div class="w-11 h-11 rounded-xl shrink-0" style="background: linear-gradient(135deg, ${t.color[0]}, ${t.color[1]});"></div>
+      <div class="min-w-0">
+        <p class="text-sm font-bold text-slate-700 truncate">${t.title}</p>
+        <p class="text-xs text-slate-400 truncate">${t.artist}</p>
+      </div>
+      <i class="fa-brands fa-spotify text-green-500 mr-auto text-sm shrink-0"></i>
+    `;
+    spotifyMockList.appendChild(card);
+  });
+  spotifyMockPanel.classList.remove('hidden');
+}
+
+/* ================== ثبت سرویس‌ورکر (اختیاری) ================== */
+// در محیط Artifact، sw.js وجود ندارد بنابراین این بخش به‌صورت محافظت‌شده اجرا می‌شود.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // در محیط پیش‌نمایش، sw.js موجود نیست؛ این خطا قابل صرف‌نظر است.
+    });
+  });
+}
+
 /* ================== مقداردهی اولیه ================== */
-audioPlayer.volume = 0.7;
-renderPlaylist();
+function init() {
+  loadFromStorage();
+  renderPlaylistTabs();
+  switchPlaylist(currentPlaylistId);
+
+  if (isShuffle) shuffleBtn.classList.add('active-toggle');
+  if (repeatMode === 1) repeatBtn.classList.add('active-toggle');
+  else if (repeatMode === 2) {
+    repeatBtn.classList.add('active-toggle');
+    repeatBtn.querySelector('i').className = 'fa-solid fa-repeat-1';
+  }
+
+  if (tracks.length > 0) {
+    if (!currentTrackId) currentTrackId = tracks[0].id;
+    const track = tracks.find(t => t.id === currentTrackId) || tracks[0];
+    currentTrackId = track.id;
+    renderTrackInfo(track);
+    if (!track.missing) {
+      audioPlayer.src = track.blobUrl || track.url;
+      audioPlayer.load();
+    }
+  }
+  renderPlaylist();
+}
+init();
 </script>
 </body>
 </html>
